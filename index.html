@@ -24,7 +24,21 @@ title = "Name";
 description = "Description";
 
 characters = [
+// temp char asset
 `
+  ll
+  ll
+lllllll
+  ll
+  ll
+`,
+// temp meteor asset
+`
+ lll
+lllll
+llllll
+ lllll
+ llll
 `
 ];
 
@@ -43,16 +57,131 @@ options = {
   theme: "dark"
 };
 
-// Initalization of variables
-let player;
-player = {
+/** @type {{angle: number, length: number, pos: Vector}} */
+let turr;
+/** @type {Vector[]} */
+const turrLength = 7;
 
+/** @type {{pos: Vector}} */
+let astronaut;
+astronaut = {
+  pos: vec(G.WIDTH - 5, G.HEIGHT / 2)
 };
 
+/**
+ * @typedef {{
+ * pos: Vector
+ * }} Meteor
+ */
+
+/**
+ * @type { Meteor [] }
+ */
+ let meteors;
+
+ /**
+ * @typedef {{
+ * pos: Vector
+ * }} Bullet
+ */
+
+/**
+ * @type { Bullet [] }
+ */
+let bullets;
+// maybe add angle/rotation to bullets?
+
+/**
+ * @type { number }
+ */
+let enemySpeed;
+
 function update() {
+  // 'ticks' counts the number of frames from the start of the game.
   if (!ticks) {
-    SPEED = 1;
+    turr = { angle: 0, length: turrLength, pos:vec(G.WIDTH/4, G.HEIGHT/2) };
+
+    bullets = [];
+    meteors = [];
   }
+  color("blue");
+  box(vec(1, G.HEIGHT/2),G.WIDTH/2,G.HEIGHT);
+
+  color("green");
+  box(turr.pos,7,7);
+
+  //turning of turret
+  turr.angle += difficulty * 0.05;
+  color("green");
+  line(turr.pos, vec(turr.pos).addWithAngle(turr.angle, turr.length));
+
+  // Need to add shooting bullets method.
+  
+  // Astronaut update (FOR SOME REASON NOT SHOWING UP)
+  astronaut.pos += vec(-1, 0);
+  color("black");
+  char("a", astronaut.pos);
+  if (char("a", astronaut.pos).isColliding.rect.blue) {
+    remove(astronaut);
+    //addscore?
+  }
+
+  // Updating and drawing meteors
+  if (meteors.length === 0) {
+    enemySpeed = rnd(0.5, 1); // * difficulty;
+
+    for (let i = 0; i < 5; i++) {
+      const posX = rnd(G.WIDTH - 2 * i, G.WIDTH - i);
+      const posY = rnd(0, G.HEIGHT);
+      meteors.push({
+        pos: vec(posX, posY),
+      });
+    }
+
+    // wavecounter or score multiplier...
+  }
+
+  // Updating and drawing bullets
+  bullets.forEach((b) => {
+    b.pos.y += 1;
+    // gotta fix bullet aim to follow mouse cursor or tip of turrret idk...
+
+    // bullet draw
+    color("yellow");
+    box(b.pos, 2);
+  });
+  
+  // Meteor handling
+  remove(meteors, (m) => {
+    m.pos.x -= enemySpeed;
+    
+    const isCollidingWithBase = char("b", m.pos).isColliding.rect.blue;
+    if (isCollidingWithBase) {
+      end(); // or can make it into a 3 strikes system
+    }
+
+    const isCollidingWithBullet = char("b", m.pos).isColliding.rect.yellow;
+    if (isCollidingWithBullet) {
+      addScore(10, m.pos);
+    }
+    
+    return (isCollidingWithBase || isCollidingWithBullet || !m.pos.isInRect(0, 0, G.WIDTH, G.HEIGHT));
+  });
+
+  // Bullet handling
+  remove(bullets, (b) => {
+    // b.pos.x -= currentEnemySpeed;
+    // gotta fix bullet aim to follow mouse cursor or tip of turrret idk...
+    
+    const isCollidingWithAstronaut = char("a", m.pos).isColliding.rect.yellow;
+    if (isCollidingWithAstronaut) {
+      end(); // or can make it into a 3 strikes system
+    }
+
+    const isCollidingWithMeteor = char("b", m.pos).isColliding.rect.yellow;
+
+    return (isCollidingWithAstronaut || isCollidingWithMeteor || !b.pos.isInRect(0, 0, G.WIDTH, G.HEIGHT));
+  });
 
 }
 
